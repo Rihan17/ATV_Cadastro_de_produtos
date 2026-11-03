@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+          integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+          crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/medieval.css}">
+    <title>Registrar Mercadoria</title>
+</head>
+<body>
+<div class="container mt-5 mb-5" style="max-width: 640px;">
+    <h1 class="mb-4">Registrar Mercadoria</h1>
+
+    <div class="pergaminho">
+        <div class="alert alert-danger" th:if="${erro}" th:text="${erro}"></div>
+
+        <form th:action="@{/cadastrar}" th:object="${produto}" method="post">
+            <div class="form-group">
+                <label for="nome">Nome do Item</label>
+                <input class="form-control" type="text" th:field="*{nome}"
+                       placeholder="Ex: Espada Longa, Elmo de Ferro..." required />
+            </div>
+            <div class="form-group">
+                <label for="preco">Preço (moedas de ouro)</label>
+                <input class="form-control" type="number" th:field="*{preco}"
+                       step="0.01" min="0.01" placeholder="Ex: 49.90" required />
+            </div>
+            <div class="form-group">
+                <label for="estoque">Estoque (unidades)</label>
+                <input class="form-control" type="number" th:field="*{estoque}"
+                       min="0" step="1" placeholder="Ex: 10" required />
+            </div>
+            <div class="form-group">
+                <label for="categoria">Categoria</label>
+                <input class="form-control" type="text" th:field="*{categoria}"
+                       placeholder="Ex: Armas, Armaduras, Poções..." required />
+            </div>
+
+            <div class="divisor">✦ ✦ ✦</div>
+
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-primary" type="submit">⚔ Registrar</button>
+                <a th:href="@{/lista}" class="btn btn-secondary">📜 Ver Inventário</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

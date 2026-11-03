@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+          integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+          crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/medieval.css}">
+    <title>Inventário do Reino</title>
+</head>
+<body>
+<div class="container mt-5 mb-5">
+    <h1 class="mb-4">Inventário do Reino</h1>
+
+    <div class="card">
+        <div class="card-body">
+
+            <div class="alert alert-success" th:if="${sucesso}" th:text="${sucesso}"></div>
+
+            <!-- Busca por nome ou categoria -->
+            <form th:action="@{/lista}" method="get" class="form-inline mb-3">
+                <input type="text" name="busca" th:value="${busca}" class="form-control mr-2"
+                       placeholder="Buscar por nome ou categoria...">
+                <button type="submit" class="btn btn-primary mr-2">🔍 Buscar</button>
+                <a th:href="@{/lista}" class="btn btn-secondary">Limpar</a>
+            </form>
+
+            <div class="alert alert-info" role="alert" th:if="${#lists.isEmpty(produtos)}">
+                Os cofres estão vazios... nenhuma mercadoria foi encontrada.
+            </div>
+
+            <table class="table table-striped" th:unless="${#lists.isEmpty(produtos)}">
+                <thead class="thead-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Item</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Categoria</th>
+                    <th>Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="produto, iterStat : ${produtos}">
+                    <td th:text="${iterStat.count}">1</td>
+                    <td th:text="${produto.nome}">Nome</td>
+                    <td th:text="${#numbers.formatDecimal(produto.preco, 1, 2)} + ' 🪙'">0,00</td>
+                    <td th:text="${produto.estoque}">0</td>
+                    <td th:text="${produto.categoria}">Categoria</td>
+                    <td>
+                        <form th:action="@{/excluir/{id}(id=${produto.id})}" method="post"
+                              onsubmit="return confirm('Deseja realmente excluir este item?');">
+                            <button type="submit" class="btn btn-primary btn-sm">🗑 Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Exercício 12: totais abaixo da tabela -->
+            <div class="text-center" th:unless="${#lists.isEmpty(produtos)}">
+                <p class="text-muted mb-1"
+                   th:text="'Total de produtos cadastrados: ' + ${produtos.size()}"></p>
+                <p class="text-muted"
+                   th:text="'Total de unidades em estoque: ' + ${#aggregates.sum(produtos.![estoque])}"></p>
+            </div>
+
+            <div class="divisor">✦ ✦ ✦</div>
+
+            <div class="text-center">
+                <a th:href="@{/cadastrar}" class="btn btn-primary">⚔ Registrar nova mercadoria</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

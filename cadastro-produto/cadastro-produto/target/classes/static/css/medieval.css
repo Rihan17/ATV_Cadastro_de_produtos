@@ -1,0 +1,145 @@
+:root {
+    --madeira: #2b1a0e;
+    --madeira-clara: #4a2f1a;
+    --pergaminho: #f1e0b5;
+    --pergaminho-escuro: #d9c08a;
+    --ouro: #c9a227;
+    --ouro-escuro: #8a6d12;
+    --sangue: #7a1f1f;
+    --tinta: #2a1b0c;
+}
+
+body {
+    font-family: 'Cinzel', serif;
+    color: var(--tinta);
+    min-height: 100vh;
+    background:
+            radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.65) 100%),
+            repeating-linear-gradient(90deg, var(--madeira) 0 38px, #25160b 38px 40px, var(--madeira-clara) 40px 78px, #25160b 78px 80px);
+    background-attachment: fixed;
+}
+
+h1, h2, h3, .brasao {
+    font-family: 'MedievalSharp', cursive;
+}
+
+h1 {
+    color: var(--ouro);
+    text-align: center;
+    text-shadow: 2px 2px 0 #000, 0 0 12px rgba(201, 162, 39, .45);
+    letter-spacing: 2px;
+}
+
+h1::before { content: "⚔ "; }
+h1::after  { content: " 🛡"; }
+
+/* Pergaminho */
+.card,
+.pergaminho {
+    background:
+            radial-gradient(circle at 20% 15%, rgba(255,255,255,.25), transparent 40%),
+            linear-gradient(135deg, var(--pergaminho), var(--pergaminho-escuro));
+    border: 4px double var(--ouro-escuro);
+    border-radius: 6px;
+    box-shadow: 0 0 0 4px var(--madeira), 0 10px 30px rgba(0,0,0,.7), inset 0 0 40px rgba(110, 70, 20, .35);
+}
+
+.pergaminho { padding: 2rem; }
+
+/* Formulário */
+label {
+    font-weight: 700;
+    color: var(--sangue);
+    letter-spacing: 1px;
+}
+
+.form-control {
+    font-family: 'Cinzel', serif;
+    background: rgba(255, 250, 235, .7);
+    border: 2px solid var(--ouro-escuro);
+    border-radius: 3px;
+    color: var(--tinta);
+}
+
+.form-control:focus {
+    background: #fff9e6;
+    border-color: var(--sangue);
+    box-shadow: 0 0 8px rgba(122, 31, 31, .5);
+}
+
+.form-control::placeholder {
+    color: #8a7550;
+    font-style: italic;
+}
+
+/* Botões */
+.btn {
+    font-family: 'MedievalSharp', cursive;
+    letter-spacing: 1px;
+    border-radius: 3px;
+    border: 2px solid var(--ouro);
+    text-shadow: 1px 1px 0 #000;
+    transition: all .2s;
+}
+
+.btn-primary {
+    background: linear-gradient(180deg, #9b2a2a, var(--sangue));
+    color: var(--pergaminho);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background: linear-gradient(180deg, #b53333, #8f2323);
+    border-color: #ffd96b;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.6);
+}
+
+.btn-secondary {
+    background: linear-gradient(180deg, var(--madeira-clara), var(--madeira));
+    color: var(--ouro);
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+    background: linear-gradient(180deg, #5d3a20, #3a2412);
+    border-color: #ffd96b;
+    color: #ffd96b;
+    transform: translateY(-2px);
+}
+
+/* Tabela */
+.table {
+    color: var(--tinta);
+    border: 2px solid var(--ouro-escuro);
+}
+
+.thead-dark th {
+    background: var(--madeira);
+    color: var(--ouro);
+    font-family: 'MedievalSharp', cursive;
+    border-color: var(--ouro-escuro);
+    letter-spacing: 1px;
+}
+
+.table-striped tbody tr:nth-of-type(odd)  { background: rgba(122, 78, 30, .12); }
+.table-striped tbody tr:nth-of-type(even) { background: rgba(255, 250, 235, .35); }
+.table td, .table th { border-color: rgba(138, 109, 18, .5); }
+
+/* Avisos */
+.alert-info {
+    background: rgba(255, 250, 235, .6);
+    color: var(--sangue);
+    border: 2px dashed var(--ouro-escuro);
+    font-style: italic;
+    text-align: center;
+}
+
+.text-muted { color: #6b5428 !important; }
+
+/* Divisor decorativo */
+.divisor {
+    text-align: center;
+    color: var(--ouro-escuro);
+    margin: 1rem 0;
+    letter-spacing: 8px;
+}
