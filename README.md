@@ -1,264 +1,127 @@
-# API Biblioteca Digital — FastAPI + Redis
+# ⚔ Cadastro de Produtos — Inventário do Reino
 
-Backend do case de estudo: CRUD completo de livros, API REST em Python (FastAPI) com persistência em Redis.
+Aplicação web de cadastro de produtos desenvolvida com **Spring Boot**, **Thymeleaf** e **Spring Data JPA**, com interface temática medieval. Permite registrar mercadorias, listar o inventário, buscar por nome ou categoria e excluir itens.
 
----
+Projeto desenvolvido para a disciplina de **Técnicas de Programação II** (FATEC).
 
-## 1. Manual de execução
+## Funcionalidades
 
-### Pré-requisitos
+- **Cadastrar** produto com nome, preço, estoque e categoria
+- **Listar** todo o inventário em tabela
+- **Buscar** por nome ou categoria (parcial e sem diferenciar maiúsculas/minúsculas)
+- **Excluir** produto, com confirmação antes de remover
+- **Totais** exibidos abaixo da tabela: quantidade de produtos e soma das unidades em estoque
+- **Validação** no servidor: preço deve ser maior que 0 e estoque não pode ser negativo
+- Mensagens de sucesso e erro após as operações (via flash attributes)
 
-Python 3.10 ou superior e um Redis acessível. No Windows, o caminho mais simples é o Docker Desktop (o `docker-compose.yml` deste projeto já sobe o Redis); sem Docker, dá para usar o WSL ou o Memurai.
+## Tecnologias
 
-### Passo 1 — subir o Redis
+| Tecnologia | Uso |
+|---|---|
+| Java 17 | Linguagem |
+| Spring Boot 4.1.2 | Framework base |
+| Spring Web MVC | Controllers e rotas |
+| Spring Data JPA | Persistência |
+| Thymeleaf | Templates HTML |
+| H2 (em memória) | Banco de dados |
+| Bootstrap 4.6.2 (CDN) | Layout e componentes |
+| Google Fonts (Cinzel, MedievalSharp) | Tipografia do tema |
+| Maven (wrapper incluso) | Build e dependências |
+
+## Pré-requisitos
+
+- **JDK 17** ou superior
+- Conexão com a internet (Bootstrap e fontes são carregados via CDN)
+
+Não é necessário instalar o Maven: o projeto inclui o Maven Wrapper (`mvnw` / `mvnw.cmd`).
+
+## Como executar
 
 ```bash
-docker compose up -d
-```
-
-Para conferir se respondeu: `docker exec -it biblioteca-redis redis-cli ping` (deve retornar `PONG`).
-
-### Passo 2 — instalar as dependências
-
-```bash
-python -m venv venv
+# Linux / macOS
+./mvnw spring-boot:run
 
 # Windows
-venv\Scripts\activate
-# Linux / macOS
-source venv/bin/activate
-
-pip install -r requirements.txt
+mvnw.cmd spring-boot:run
 ```
 
-### Passo 3 — rodar a API
+Depois, acesse **http://localhost:8080**. A raiz (`/`) redireciona automaticamente para a tela de cadastro.
+
+Para gerar o `.jar` e executá-lo:
 
 ```bash
-uvicorn main:app --reload
+./mvnw clean package
+java -jar target/cadastro-produto-0.0.1-SNAPSHOT.jar
 ```
 
-A API sobe em `http://localhost:8000` e a documentação interativa fica em **http://localhost:8000/docs**.
-
-### Passo 4 — testar
-
-Pelo navegador, em `/docs`, cada endpoint tem o botão *Try it out*. Ou, automaticamente:
+Para rodar os testes:
 
 ```bash
-python teste_api.py
+./mvnw test
 ```
 
-O script cobre o CRUD inteiro, os filtros, as validações (422), o 404 e o 400 do PATCH vazio. Ele usa o banco 9 do Redis, então não apaga os dados do banco 0.
+## Rotas
 
-### Passo 5 — abrir o frontend
-
-Com a API no ar, basta abrir `frontend/index.html` no navegador (duplo clique já funciona, porque o CORS está liberado). Para evitar qualquer bloqueio do navegador em arquivos locais, o caminho mais seguro é servir a pasta:
-
-```bash
-cd frontend
-python -m http.server 5500
-```
-
-e acessar `http://localhost:5500`. Se a API estiver em outro endereço, dá para apontar pela URL, sem editar código: `http://localhost:5500/?api=http://192.168.0.10:8000`.
-
-### Variáveis de ambiente (opcionais)
-
-| Variável | Padrão | Função |
+| Método | Rota | Descrição |
 |---|---|---|
-| `REDIS_HOST` | `localhost` | Host do Redis |
-| `REDIS_PORT` | `6379` | Porta do Redis |
-| `REDIS_DB` | `0` | Número do banco |
+| GET | `/` | Redireciona para `/cadastrar` |
+| GET | `/cadastrar` | Exibe o formulário de cadastro |
+| POST | `/cadastrar` | Valida e salva o produto, depois redireciona para `/lista` |
+| GET | `/lista` | Lista os produtos. Aceita `?busca=termo` |
+| POST | `/excluir/{id}` | Exclui o produto e redireciona para `/lista` |
 
----
+## Modelo de dados
 
-## 2. Modelagem da base de dados (Redis)
+Entidade `Produto`:
 
-O Redis não tem tabelas nem `SELECT`, então a modelagem é feita com estruturas de dados. Este projeto usa três chaves:
-
-| Chave | Tipo | Função |
+| Campo | Tipo | Descrição |
 |---|---|---|
-| `livro:{id}` | Hash | Guarda os campos de um livro |
-| `livros:ids` | Set | Guarda todos os IDs cadastrados |
-| `livro:seq` | String (contador) | Gera os IDs com `INCR` |
+| `id` | `Long` | Chave primária, gerada automaticamente |
+| `nome` | `String` | Nome do produto |
+| `preco` | `double` | Preço (deve ser > 0) |
+| `categoria` | `String` | Categoria do produto (ex.: Armas, Armaduras, Poções) |
+| `estoque` | `int` | Quantidade em estoque (deve ser ≥ 0) |
 
-### Campos do hash `livro:{id}`
+## Banco de dados e console H2
 
-| Campo | Tipo lógico | Obrigatório | Regra de validação |
-|---|---|---|---|
-| `id` | Inteiro | gerado pela API | Sequencial, via `INCR livro:seq` |
-| `titulo` | Texto | sim | 1 a 200 caracteres, não pode ser só espaços |
-| `autor` | Texto | sim | 1 a 120 caracteres |
-| `categoria` | Texto | sim | 1 a 60 caracteres |
-| `ano_publicacao` | Inteiro | sim | Entre 1450 e o ano atual + 1 |
-| `quantidade_disponivel` | Inteiro | sim | Entre 0 e 100.000 |
-| `status` | Texto | derivado | `Disponivel` se a quantidade > 0, senão `Emprestado` |
+O projeto usa o H2 em **memória**, então **os dados são perdidos ao reiniciar a aplicação**. A configuração está em `src/main/resources/application.properties`:
 
-No Redis todo valor de hash é string; a API converte os números na leitura e na escrita.
-
-### Por que um Set de IDs
-
-Para listar todos os livros seria preciso varrer o banco com `SCAN livro:*`, que é uma operação de custo imprevisível. Mantendo os IDs em `livros:ids`, a listagem é um `SMEMBERS` seguido de um *pipeline* de `HGETALL` — uma única ida ao servidor. O cadastro e a exclusão atualizam o hash e o set juntos, dentro de um pipeline, para não deixar ID órfão.
-
-### Decisão sobre o campo `status`
-
-O enunciado pede o campo `status`, mas ele é informação redundante: um livro com zero exemplares não pode estar disponível. Por isso a API calcula o `status` a partir de `quantidade_disponivel` em vez de aceitá-lo do cliente. Isso elimina a possibilidade de um registro inconsistente (`quantidade = 0` com `status = Disponivel`).
-
-### Exemplo do que fica gravado
-
-```
-> HGETALL livro:1
-1) "id"                     2) "1"
-3) "titulo"                 4) "Dom Casmurro"
-5) "autor"                  6) "Machado de Assis"
-7) "categoria"              8) "Romance"
-9) "ano_publicacao"        10) "1899"
-11) "quantidade_disponivel" 12) "3"
-13) "status"                14) "Disponivel"
-
-> SMEMBERS livros:ids
-1) "1"
-
-> GET livro:seq
-"1"
+```properties
+spring.datasource.url=jdbc:h2:mem:cadastro
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.h2.console.enabled=true
 ```
 
-### Comandos Redis usados por operação
+Com a aplicação rodando, o console do banco fica em **http://localhost:8080/h2-console**. Use a JDBC URL `jdbc:h2:mem:cadastro`, usuário `sa` e senha em branco.
 
-| Operação da API | Comandos |
-|---|---|
-| Cadastrar | `INCR livro:seq`, `HSET livro:{id}`, `SADD livros:ids` |
-| Listar | `SMEMBERS livros:ids`, `HGETALL livro:{id}` (em pipeline) |
-| Consultar por ID | `HGETALL livro:{id}` |
-| Atualizar (PUT/PATCH) | `HGETALL livro:{id}`, `HSET livro:{id}` |
-| Excluir | `DEL livro:{id}`, `SREM livros:ids` |
+## Estrutura do projeto
 
----
-
-## 3. Documentação dos endpoints
-
-Base: `http://localhost:8000`. A documentação viva (Swagger) fica em `/docs` e o schema OpenAPI em `/openapi.json`.
-
-| Método | Rota | O que faz | Sucesso |
-|---|---|---|---|
-| `GET` | `/` | Informações da API | 200 |
-| `GET` | `/health` | Verifica a conexão com o Redis | 200 |
-| `POST` | `/livros` | Cadastra um livro | 201 |
-| `GET` | `/livros` | Lista os livros, com filtros opcionais | 200 |
-| `GET` | `/livros/{id}` | Consulta um livro por ID | 200 |
-| `PUT` | `/livros/{id}` | Atualiza todos os campos | 200 |
-| `PATCH` | `/livros/{id}` | Atualiza apenas os campos enviados | 200 |
-| `DELETE` | `/livros/{id}` | Exclui um livro | 200 |
-
-Filtros aceitos em `GET /livros`: `categoria` (igualdade, ignora maiúsculas), `autor` (busca parcial) e `status` (`Disponivel` ou `Emprestado`). Exemplo: `GET /livros?categoria=romance&status=Disponivel`.
-
-### Formato das respostas
-
-Toda resposta de sucesso usa o mesmo envelope, o que simplifica o tratamento no frontend:
-
-```json
-{
-  "sucesso": true,
-  "mensagem": "Livro cadastrado com sucesso (ID 1).",
-  "dados": {
-    "titulo": "Dom Casmurro",
-    "autor": "Machado de Assis",
-    "categoria": "Romance",
-    "ano_publicacao": 1899,
-    "quantidade_disponivel": 3,
-    "id": 1,
-    "status": "Disponivel"
-  }
-}
+```
+cadastro-produto/
+├── pom.xml
+├── mvnw / mvnw.cmd
+└── src/
+    ├── main/
+    │   ├── java/com/example/cadastro_produto/
+    │   │   ├── CadastroProdutoApplication.java   # Classe principal
+    │   │   ├── controller/ProdutoController.java # Rotas e validação
+    │   │   ├── service/ProdutoService.java       # Regras de negócio
+    │   │   ├── repository/ProdutoRepository.java # Acesso a dados (JPA)
+    │   │   └── model/Produto.java                # Entidade
+    │   └── resources/
+    │       ├── application.properties
+    │       ├── static/css/medieval.css           # Tema medieval
+    │       └── templates/
+    │           ├── cadastrar.html                # Formulário
+    │           └── lista.html                    # Inventário
+    └── test/java/.../CadastroProdutoApplicationTests.java
 ```
 
-Em `GET /livros`, `dados` é uma lista de livros. Em `DELETE`, é `null`.
+A aplicação segue a arquitetura em camadas **Controller → Service → Repository → Model**.
 
-### Corpo esperado no POST e no PUT
+## Autor
 
-```json
-{
-  "titulo": "Dom Casmurro",
-  "autor": "Machado de Assis",
-  "categoria": "Romance",
-  "ano_publicacao": 1899,
-  "quantidade_disponivel": 3
-}
-```
-
-No `PATCH`, qualquer subconjunto desses campos. O `status` nunca é enviado pelo cliente.
-
----
-
-## 4. Tratamento de erros
-
-| Código | Quando acontece | Corpo |
-|---|---|---|
-| 400 | `PATCH` sem nenhum campo | `{"sucesso": false, "mensagem": "Envie ao menos um campo para atualizar."}` |
-| 404 | ID não existe no `GET`, `PUT`, `PATCH` ou `DELETE` | `{"sucesso": false, "mensagem": "Livro 99 nao encontrado."}` |
-| 422 | Validação de campo (tipo errado, campo faltando, ano ou quantidade fora da faixa) | ver abaixo |
-| 503 | Redis fora do ar ou inacessível | `{"sucesso": false, "mensagem": "Banco de dados indisponivel...", "erro": "..."}` |
-
-O 422 vem com a lista de campos problemáticos, pronta para ser exibida no frontend:
-
-```json
-{
-  "sucesso": false,
-  "mensagem": "Dados invalidos. Corrija os campos indicados.",
-  "erros": [
-    { "campo": "ano_publicacao", "erro": "Value error, deve estar entre 1450 e 2027" },
-    { "campo": "quantidade_disponivel", "erro": "Input should be greater than or equal to 0" }
-  ]
-}
-```
-
-O CORS está liberado para qualquer origem (`allow_origins=["*"]`), de modo que o frontend pode rodar em outra porta sem configuração extra. Em um sistema real, essa lista seria restrita ao domínio do frontend.
-
----
-
-## 5. Frontend (HTML + CSS + JavaScript)
-
-O frontend está na pasta `frontend/` e é feito só com HTML, CSS e JavaScript puro — sem framework, sem build, sem dependência para instalar. Ele conversa com a API apenas por `fetch`.
-
-| Arquivo | Conteúdo |
-|---|---|
-| `frontend/index.html` | Estrutura das quatro telas |
-| `frontend/style.css` | Estilos |
-| `frontend/app.js` | Chamadas à API, validações e mensagens |
-
-### Telas
-
-A navegação é por abas, e cada aba cobre uma operação do CRUD. Em **Consultar** ficam a busca por ID, que mostra a ficha do livro, e a listagem completa, com filtros de categoria, autor e status; cada linha da tabela tem os botões *Editar* e *Excluir*, que levam direto para a tela correspondente com o ID já preenchido. **Cadastrar** traz o formulário do novo livro, com as categorias já usadas sugeridas no campo. **Atualizar** funciona em dois passos: carrega o livro pelo ID e depois salva, com `PATCH` (só o que mudou) ou `PUT` (todos os campos). **Excluir** também é em dois passos: localiza o livro, mostra a ficha dele e só então pede a confirmação.
-
-### Mensagens de sucesso e erro
-
-Toda resposta da API vira um aviso no canto da tela: verde para sucesso, vermelho para erro, sempre com a mensagem que o backend devolveu. Nos erros 422, cada problema aparece também embaixo do campo correspondente, com a borda do input em vermelho — é para isso que serve a lista `erros` do backend.
-
-O cabeçalho tem um indicador que consulta `/health` a cada 30 segundos e mostra três estados: API e Redis online, Redis indisponível (503) ou API offline. Isso evita a confusão clássica de achar que o frontend quebrou quando, na verdade, o backend não está rodando.
-
-### Validação em dois níveis
-
-O `app.js` valida os campos antes de enviar (obrigatórios, tamanho máximo, ano entre 1450 e o ano atual + 1, quantidade inteira não negativa), o que dá retorno imediato ao usuário. Mesmo assim, a API valida tudo de novo — validação de frontend é conveniência, não segurança, já que qualquer um pode chamar a API direto.
-
----
-
-## 6. Arquivos do projeto
-
-| Arquivo | Conteúdo |
-|---|---|
-| `main.py` | A API inteira: modelos, validações, acesso ao Redis, rotas e handlers de erro |
-| `teste_api.py` | Teste automatizado dos endpoints |
-| `requirements.txt` | Dependências Python |
-| `docker-compose.yml` | Sobe o Redis |
-| `frontend/` | Interface em HTML, CSS e JavaScript |
-| `README.md` | Este documento |
-
-### Organização de `main.py`
-
-O arquivo é dividido em seções comentadas: configuração e chaves do Redis, conexão (pool e dependência do FastAPI), modelos Pydantic (`LivroCreate`, `LivroReplace`, `LivroPatch`, `Livro`), a camada de conversão entre o hash do Redis e os modelos, os handlers de erro e, por último, as rotas.
-
----
-
-## 7. Sobre a entrega
-
-Já estão cobertos: o código-fonte do backend e do frontend, a modelagem da base (seção 2, que serve de base caso o professor queira o documento em arquivo separado), o manual de execução (seção 1), a documentação dos endpoints (seção 3 mais o Swagger em `/docs`), a validação de entradas, as mensagens de sucesso e erro e o tratamento de erros.
-
-Falta o vídeo ou apresentação de demonstração.
+**Rihan Amorim** — [GitHub](https://github.com/Rihan17) · [LinkedIn](https://linkedin.com/in/rihan-amorim)
